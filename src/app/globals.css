@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --bg-cream: #FAF6EE;
+  --bg-wave: #F3ECE0;
+  --surface-ivory: #FDFBF7;
+  --border-gold: #DECBA4;
+  --border-gold-soft: #E6D8BE;
+  --gold-accent: #C49A45;
+  --gold-dark: #9E7A38;
+  --gold-deep: #8B6A2B;
+  --text-espresso: #231F1E;
+  --text-muted: #6E655F;
+  --status-available: #6B8E6B;
+  --status-preparing: #C49A45;
+  --status-ready: #4A779D;
+}
+
+html,
+body {
+  background-color: #FAF6EE;
+  color: #231F1E;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.saborea-gold-btn {
+  background: linear-gradient(135deg, #D5B163 0%, #C29640 52%, #AD802E 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 228, 0.45),
+    0 3px 10px rgba(164, 122, 43, 0.22);
+  transition: transform 0.14s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.saborea-gold-btn:hover {
+  filter: brightness(1.03);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 228, 0.55),
+    0 4px 14px rgba(164, 122, 43, 0.28);
+}
+
+.saborea-gold-btn:active {
+  transform: scale(0.99);
+}
+
+.saborea-card {
+  background-color: #FDFBF7;
+  border: 1px solid #DECBA4;
+  box-shadow: 0 2px 10px rgba(145, 117, 65, 0.06);
+}
+
+.saborea-gold-text-gradient {
+  background: linear-gradient(180deg, #D6B469 0%, #A98033 55%, #8D6822 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
