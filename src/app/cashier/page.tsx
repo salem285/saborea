@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  BellRing,
   CheckCircle2,
+  LogOut,
+  Minus,
   Plus,
   Printer,
   Tag,
   User,
   X,
-  Minus,
 } from "lucide-react";
 import {
   type OrderLineItem,
@@ -33,20 +36,27 @@ function StatusDot({ status }: { status: TableRecord["status"] }) {
 }
 
 export default function CashierPage() {
+  const router = useRouter();
   const {
     tables,
     selectedTable,
     selectTable,
     markTableComplete,
+    updateTableStatus,
     assignOrderToTable,
     menuItems,
     getLineTotal,
     getTableTotal,
   } = useDemoStore();
 
-  const [printPreviewTable, setPrintPreviewTable] = useState<TableRecord | null>(null);
-  const [assignModalTableId, setAssignModalTableId] = useState<string | null>(null);
-  const [draftQuantities, setDraftQuantities] = useState<Record<string, number>>({});
+  const [printPreviewTable, setPrintPreviewTable] =
+    useState<TableRecord | null>(null);
+  const [assignModalTableId, setAssignModalTableId] = useState<string | null>(
+    null
+  );
+  const [draftQuantities, setDraftQuantities] = useState<
+    Record<string, number>
+  >({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -56,9 +66,16 @@ export default function CashierPage() {
     }, 2800);
   };
 
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/login?role=cashier");
+    router.refresh();
+  };
+
   const openAssignModal = (tableId: string) => {
     setAssignModalTableId(tableId);
-    setDraftQuantities({ "classic-margherita": 1 });
+    const firstDishId = menuItems[0]?.id;
+    setDraftQuantities(firstDishId ? { [firstDishId]: 1 } : {});
   };
 
   const handleConfirmAssign = () => {
@@ -85,9 +102,14 @@ export default function CashierPage() {
     showToast(`Order assigned to ${tbl?.number ?? "table"}`);
   };
 
+  const handleMarkReady = (table: TableRecord) => {
+    updateTableStatus(table.id, "Ready");
+    showToast(`${table.number} marked Ready for service`);
+  };
+
   const handleCompleteTable = (table: TableRecord) => {
     markTableComplete(table.id);
-    showToast(`${table.number} marked complete & cleared`);
+    showToast(`${table.number} completed & returned to Available`);
   };
 
   const selectedTotal = getTableTotal(selectedTable);
@@ -106,7 +128,7 @@ export default function CashierPage() {
             Cashier
           </h1>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <div
               className="w-10 h-10 rounded-full border border-[#BFA36F] bg-[#FDFBF7] flex items-center justify-center text-[#9E7A38]"
               title="Cashier Profile"
@@ -119,6 +141,15 @@ export default function CashierPage() {
               <span className="hidden sm:inline">Service active</span>
               <span className="sm:hidden">Active</span>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="تسجيل الخروج / Logout"
+              className="rounded-full border border-[#DECBA4] bg-[#FDFBF7] px-3 py-1.5 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#8B6A2B] hover:bg-[#F5EBD6] transition cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
 
@@ -147,10 +178,10 @@ export default function CashierPage() {
               </div>
             </div>
 
-            {/* 3x2 Grid of Tables */}
+            {/* Grid of Tables */}
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {tables.map((table) => {
-                const isSelected = table.id === selectedTable.id;
+                const isSelected = table.id === selectedTable?.id;
 
                 return (
                   <div
@@ -221,15 +252,20 @@ export default function CashierPage() {
                   </div>
                 );
               })}
+
+              {tables.length === 0 && (
+                <div className="col-span-full py-12 text-center text-[14px] text-[#6E655F]">
+                  No tables configured in database yet.
+                </div>
+              )}
             </div>
           </section>
 
           {/* Right Panel: Selected Table Order */}
           <aside className="saborea-card rounded-[20px] p-5 sm:p-6 relative overflow-hidden">
-            {/* Header with subtle underline & botanical sprig */}
             <div className="relative pb-3 border-b border-[#E6D8BE]">
               <h2 className="font-serif font-semibold text-[25px] leading-tight text-[#231F1E]">
-                {selectedTable.number} order
+                {selectedTable ? `${selectedTable.number} order` : "Table order"}
               </h2>
               <BotanicalSprig
                 className="pointer-events-none absolute -top-2 -right-3 w-20 h-14 opacity-70"
@@ -237,14 +273,19 @@ export default function CashierPage() {
               />
             </div>
 
-            {selectedTable.items.length > 0 ? (
+            {selectedTable && selectedTable.items.length > 0 ? (
               <div>
-                {/* Demo / Live Tag */}
-                <div className="mt-3">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#F7EFE0] border border-[#E5D7BE] px-2.5 py-0.5 text-[11px] font-medium text-[#6E655F]">
+                {/* Live Order Status Badge */}
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F7EFE0] border border-[#E5D7BE] px-2.5 py-0.5 text-[11.5px] font-medium text-[#6E655F]">
                     <Tag className="w-3 h-3 text-[#B58938]" />
-                    {selectedTable.isDemo ? "Demo order" : "Active order"}
+                    <span>{selectedTable.status}</span>
                   </span>
+                  {selectedTable.updatedAt && (
+                    <span className="text-[11.5px] text-[#6E655F]">
+                      {selectedTable.updatedAt}
+                    </span>
+                  )}
                 </div>
 
                 {/* Itemized Rows */}
@@ -263,7 +304,8 @@ export default function CashierPage() {
                           />
                         </div>
                         <span className="font-serif text-[16px] text-[#231F1E] truncate">
-                          {line.name} <span className="text-[#6E655F]">× {line.quantity}</span>
+                          {line.name}{" "}
+                          <span className="text-[#6E655F]">× {line.quantity}</span>
                         </span>
                       </div>
 
@@ -285,7 +327,7 @@ export default function CashierPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-5 space-y-3">
+                <div className="mt-5 space-y-2.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -297,6 +339,17 @@ export default function CashierPage() {
                     <Printer className="w-4 h-4" />
                     <span>Print order</span>
                   </button>
+
+                  {selectedTable.status === "Preparing" && (
+                    <button
+                      type="button"
+                      onClick={() => handleMarkReady(selectedTable)}
+                      className="w-full rounded-[12px] border border-[#4A779D] bg-[#EBF1F6] py-2.5 font-serif text-[16.5px] font-medium text-[#365C7D] hover:bg-[#DCE7F0] flex items-center justify-center gap-2 transition cursor-pointer"
+                    >
+                      <BellRing className="w-4 h-4" />
+                      <span>Mark order Ready</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -315,19 +368,23 @@ export default function CashierPage() {
             ) : (
               <div className="py-10 text-center">
                 <p className="font-serif text-[19px] text-[#231F1E]">
-                  {selectedTable.number} is available
+                  {selectedTable
+                    ? `${selectedTable.number} is available`
+                    : "Select a table"}
                 </p>
                 <p className="mt-1 text-[13px] text-[#6E655F]">
                   No active order assigned to this table yet.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => openAssignModal(selectedTable.id)}
-                  className="mt-5 saborea-gold-btn rounded-[12px] px-5 py-2.5 font-serif text-[16px] text-white inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Assign order</span>
-                </button>
+                {selectedTable && (
+                  <button
+                    type="button"
+                    onClick={() => openAssignModal(selectedTable.id)}
+                    className="mt-5 saborea-gold-btn rounded-[12px] px-5 py-2.5 font-serif text-[16px] text-white inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Assign order</span>
+                  </button>
+                )}
               </div>
             )}
           </aside>
@@ -374,7 +431,9 @@ export default function CashierPage() {
                         <p className="font-serif text-[15px] text-[#231F1E] truncate">
                           {item.name}
                         </p>
-                        <p className="text-[12px] text-[#9E7A38]">EGP {item.price}</p>
+                        <p className="text-[12px] text-[#9E7A38]">
+                          EGP {item.price}
+                        </p>
                       </div>
                     </div>
 
@@ -454,7 +513,9 @@ export default function CashierPage() {
               <p className="font-serif text-[20px] tracking-widest text-[#9E7A38]">
                 SABOREA
               </p>
-              <p className="text-[11px] text-[#6E655F]">A little joy in every bite.</p>
+              <p className="text-[11px] text-[#6E655F]">
+                A little joy in every bite.
+              </p>
               <p className="mt-2 font-serif font-semibold text-[16px] text-[#231F1E]">
                 {printPreviewTable.number} — Kitchen Ticket
               </p>

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, CheckCircle2, ReceiptText } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2 } from "lucide-react";
 import { useDemoStore } from "@/context/DemoStoreProvider";
 import {
   BotanicalSprig,
@@ -14,6 +14,7 @@ import {
 export default function OrderReviewPage() {
   const router = useRouter();
   const {
+    categories,
     cartItems,
     cartTotal,
     assignedTableNumber,
@@ -21,6 +22,8 @@ export default function OrderReviewPage() {
     confirmCustomerOrder,
     resetConfirmationBanner,
   } = useDemoStore();
+
+  const firstCategorySlug = categories[0]?.slug ?? "pizza";
 
   const handleConfirm = () => {
     confirmCustomerOrder();
@@ -55,12 +58,12 @@ export default function OrderReviewPage() {
           </h1>
           <p className="mt-1 text-[14px] text-[#6E655F]">
             {lastConfirmedOrder && cartItems.length === 0
-              ? "Order sent to kitchen"
+              ? "تم إرسال طلبك للمطبخ بنجاح"
               : "Review before confirming"}
           </p>
         </div>
 
-        {/* Confirmed Order State */}
+        {/* Confirmed Order State — Strictly Customer-Facing (No Cashier link) */}
         {lastConfirmedOrder && cartItems.length === 0 ? (
           <section className="mt-5 space-y-4">
             <div className="saborea-card rounded-[18px] p-6 text-center relative overflow-hidden">
@@ -69,14 +72,17 @@ export default function OrderReviewPage() {
               </div>
 
               <h2 className="mt-3.5 font-serif font-semibold text-[24px] text-[#231F1E]">
-                Order confirmed
+                تم إرسال طلبك للمطبخ بنجاح
               </h2>
               <p className="mt-1 text-[14px] text-[#6E655F]">
-                Sent directly to Cashier &amp; Kitchen for{" "}
+                Order{" "}
+                <span className="font-mono font-semibold text-[#231F1E]">
+                  #{lastConfirmedOrder.id}
+                </span>{" "}
+                ·{" "}
                 <span className="font-medium text-[#9E7A38]">
                   {lastConfirmedOrder.tableNumber}
                 </span>
-                .
               </p>
 
               <div className="mt-5 border-t border-[#E6D8BE] pt-4 space-y-2.5 text-left">
@@ -104,21 +110,13 @@ export default function OrderReviewPage() {
                 </div>
               </div>
 
-              <div className="mt-6 flex flex-col gap-2.5">
+              <div className="mt-6">
                 <Link
-                  href="/cashier"
+                  href={`/menu/${firstCategorySlug}`}
                   onClick={resetConfirmationBanner}
-                  className="saborea-gold-btn w-full rounded-[12px] py-3 font-serif text-[17px] font-medium text-white flex items-center justify-center gap-2"
+                  className="saborea-gold-btn w-full rounded-[12px] py-3 font-serif text-[17px] font-medium text-white inline-flex items-center justify-center"
                 >
-                  <ReceiptText className="w-4 h-4" />
-                  <span>View in Cashier POS</span>
-                </Link>
-                <Link
-                  href="/menu/pizza"
-                  onClick={resetConfirmationBanner}
-                  className="w-full rounded-[12px] border border-[#DECBA4] bg-[#FDFBF7] py-2.5 text-[14px] font-medium text-[#8B6A2B] hover:bg-[#F5EBD6] transition"
-                >
-                  + Order more items
+                  + طلب إضافات جديدة / Order more items
                 </Link>
               </div>
             </div>
@@ -131,10 +129,10 @@ export default function OrderReviewPage() {
               Explore our menu to add dishes to your table.
             </p>
             <Link
-              href="/menu/pizza"
+              href={`/menu/${firstCategorySlug}`}
               className="mt-5 inline-block saborea-gold-btn rounded-full px-6 py-2.5 text-[14px] font-medium text-white"
             >
-              Explore Pizza &amp; Menu
+              Explore Menu
             </Link>
           </section>
         ) : (
@@ -179,7 +177,7 @@ export default function OrderReviewPage() {
 
               <div className="border-t border-[#E6D8BE] mt-4 pt-3 text-center">
                 <Link
-                  href="/menu/pizza"
+                  href={`/menu/${firstCategorySlug}`}
                   className="text-[14.5px] font-medium text-[#9E7A38] hover:underline"
                 >
                   + Add more items
@@ -197,7 +195,7 @@ export default function OrderReviewPage() {
               </span>
             </section>
 
-            {/* Table Number Card */}
+            {/* Table Number Card (Locked automatically via QR) */}
             <section className="saborea-card rounded-[16px] px-5 py-4 relative overflow-hidden flex items-center gap-4">
               <div className="w-12 h-12 rounded-full border-[1.5px] border-[#C9B38A] bg-[#FAF6EE] flex items-center justify-center shrink-0">
                 <Check className="w-6 h-6 text-[#6B7755] stroke-[2.5]" />

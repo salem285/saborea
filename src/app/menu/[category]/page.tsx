@@ -3,19 +3,16 @@
 import React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronLeft, Minus, Plus, ShoppingBag, Sparkles } from "lucide-react";
-import { CATEGORIES, type CategorySlug, useDemoStore } from "@/context/DemoStoreProvider";
+import { ChevronLeft, Minus, Plus, ShoppingBag } from "lucide-react";
+import { useDemoStore } from "@/context/DemoStoreProvider";
 import { SaboreaCanvasBackground, SaboreaLogo } from "@/components/SaboreaGraphics";
-import { openSaboreaConcierge } from "@/components/SaboreaCulinaryConcierge";
 
 export default function CategoryMenuPage() {
   const params = useParams<{ category: string }>();
-  const rawSlug = (params?.category ?? "pizza").toLowerCase();
-  const categoryInfo =
-    CATEGORIES.find((c) => c.slug === rawSlug) ?? CATEGORIES[0];
-  const activeSlug = categoryInfo.slug as CategorySlug;
+  const rawSlug = decodeURIComponent(params?.category ?? "pizza").toLowerCase();
 
   const {
+    categories,
     menuItems,
     cart,
     cartCount,
@@ -24,7 +21,17 @@ export default function CategoryMenuPage() {
     decrementCart,
   } = useDemoStore();
 
-  const items = menuItems.filter((item) => item.category === activeSlug);
+  const categoryInfo =
+    categories.find((c) => c.slug.toLowerCase() === rawSlug) ?? {
+      id: rawSlug,
+      slug: rawSlug,
+      label: rawSlug.charAt(0).toUpperCase() + rawSlug.slice(1),
+      image: "/images/food/margherita.jpg",
+    };
+
+  const items = menuItems.filter(
+    (item) => item.category.toLowerCase() === categoryInfo.slug.toLowerCase()
+  );
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden pb-28">
@@ -49,18 +56,6 @@ export default function CategoryMenuPage() {
           <h1 className="font-serif font-bold text-[32px] leading-tight text-[#231F1E]">
             {categoryInfo.label}
           </h1>
-          <button
-            type="button"
-            onClick={() =>
-              openSaboreaConcierge(
-                `What drinks and side pairings go best with our ${categoryInfo.label} selections?`
-              )
-            }
-            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF5EB] border border-[#D1B886]/70 text-[12px] text-[#8B6A2B] hover:bg-[#F2E8D7] transition cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#C49A45]" />
-            <span>Ask Sommelier for Pairings</span>
-          </button>
         </div>
 
         {/* Dish Cards */}
